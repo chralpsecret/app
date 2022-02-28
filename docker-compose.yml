@@ -1,0 +1,47 @@
+version: '3.1'
+
+services:
+
+  backend-service:
+    build:
+      context: ./backend/
+      dockerfile: ./Dockerfile
+    image: chralp/backend
+    restart: always
+    links:
+      - redis
+      - lendo
+    ports:
+      - 50051:50051
+    environment:
+      - LOG_LEVEL=debug
+      - REDIS_URL=redis://redis:6379
+      - GRPC_ADDRESS=0.0.0.0
+      - LENDO_APP=http://lendo:8000
+
+  http-service:
+    build:
+      context: ./http/
+      dockerfile: ./Dockerfile
+    image: chralp/http
+    restart: always
+    links:
+      - backend-service
+    ports:
+      - 3333:3333
+    environment:
+      - LOG_LEVEL=debug
+      - GRPC_ADDRESS=backend-service
+
+  lendo:
+    image: lendoab/interview-service:stable
+    restart: always
+    ports:
+      - 8000:8000
+
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - 6379:6379
+
